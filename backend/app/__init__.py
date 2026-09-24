@@ -1,0 +1,1 @@
+"""AllerWatch backend application."""

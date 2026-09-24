@@ -1,0 +1,22 @@
+.daily-date, .daily-number { margin: 20px 0 24px; }
+.daily-date label, .daily-number label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.daily-date input, .daily-number input { width: min(100%, 260px); min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 6px; font: inherit; color: var(--ink); background: var(--surface); }
+.daily-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+.daily-page .choice-grid--symptom { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.daily-note { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 16px 0; }
+.daily-save { margin-top: 24px; }
+.daily-alert { margin: 16px 0; padding: 16px; border: 1px solid var(--error-border); background: var(--error-bg); border-radius: 7px; color: var(--error-ink); font-size: 14px; line-height: 1.6; }
+.daily-success { padding: 16px; border: 1px solid var(--border-strong); background: var(--sage-wash); border-radius: 7px; }
+.daily-history { margin: 28px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.daily-history h2 { margin: 0; font-size: 20px; }
+.daily-table-scroll { overflow-x: auto; }
+.daily-history table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+.daily-history th, .daily-history td { padding: 12px 10px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.daily-history tbody th { font-weight: 500; }
+.daily-page button { min-height: 44px; }
+.daily-date input:focus-visible, .daily-number input:focus-visible, .daily-table-scroll:focus-visible { outline: 2px solid var(--sage-dark); outline-offset: 3px; }
+.daily-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 640px) {
+  .daily-page .choice-grid--symptom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .daily-history { padding: 20px 14px; }
+}

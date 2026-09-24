@@ -1,0 +1,61 @@
+# JavaScript dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+.ruff_cache/
+.mypy_cache/
+
+# Local configuration, private data, and databases
+.env
+.env.*
+!.env.example
+data/private/
+data/public_demo/
+data/generated/
+data/exports/
+data/raw/
+data/processed/
+backups/
+private/
+local/
+config/local/
+config/private/
+config/local.*
+config/private.*
+local_settings.py
+local_config.*
+secrets.*
+credentials.*
+*.local.*
+*.private.*
+*.bak
+*.backup
+*.pem
+*.key
+*.p12
+*.pfx
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Local development artifacts
+work/
+# Local audit reports and screenshots can contain private observations or paths.
+outputs/
+screenshots/
+browser-artifacts/
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
