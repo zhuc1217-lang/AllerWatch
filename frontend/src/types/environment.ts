@@ -7,7 +7,12 @@ export type CurrentEnvironment = {
   relative_humidity: number | null
   pm2_5: number | null
   pm10: number | null
-  us_aqi: number | null
+  nitrogen_dioxide: number | null
+  sulfur_dioxide: number | null
+  carbon_monoxide: number | null
+  ozone: number | null
+  china_aqi_estimate: number | null
+  china_aqi_primary_pollutant: string | null
   latitude: number
   longitude: number
 }

@@ -37,6 +37,9 @@ def test_create_valid_symptom_record(client, valid_record):
         "relative_humidity": None,
         "pm2_5": None,
         "pm10": None,
+        "china_aqi_estimate": None,
+        "china_aqi_primary_pollutant": None,
+        "nitrogen_dioxide": None, "sulfur_dioxide": None, "carbon_monoxide": None, "ozone": None,
         "us_aqi": None,
         "environment_timestamp": None,
         "weather_timestamp": None,
@@ -44,7 +47,7 @@ def test_create_valid_symptom_record(client, valid_record):
         "environment_latitude": None,
         "environment_longitude": None,
         "environment_time_eligible": {field: False for field in
-            ("pm2_5", "pm10", "us_aqi", "relative_humidity", "temperature_c")},
+            ("pm2_5", "pm10", "china_aqi_estimate", "relative_humidity", "temperature_c")},
     }
     assert isinstance(record["id"], int)
     assert record["id"] > 0

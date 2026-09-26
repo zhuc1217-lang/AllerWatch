@@ -14,10 +14,10 @@ from .environment_timing import (SOURCE_TIME as ENVIRONMENT_SOURCE_TIME,
                                  TOLERANCE_HOURS, contemporaneous_times_eligible, utc)
 from .schemas import MINIMUM_PAIRS, AnalysisModel, AssociationResult, DatasetMetadata
 
-LagExposure = Literal["pm2_5", "us_aqi", "relative_humidity"]
+LagExposure = Literal["pm2_5", "china_aqi_estimate", "relative_humidity"]
 LagHours = Literal[0, 6, 12, 24]
 LAGS: tuple[LagHours, ...] = (0, 6, 12, 24)
-LAG_EXPOSURES: tuple[LagExposure, ...] = ("pm2_5", "us_aqi", "relative_humidity")
+LAG_EXPOSURES: tuple[LagExposure, ...] = ("pm2_5", "china_aqi_estimate", "relative_humidity")
 SOURCE_TIME = {variable: ENVIRONMENT_SOURCE_TIME[variable] for variable in LAG_EXPOSURES}
 
 

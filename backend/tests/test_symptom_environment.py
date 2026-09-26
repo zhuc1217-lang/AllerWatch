@@ -11,9 +11,10 @@ from app.main import create_app
 from app.services.environment_service import EnvironmentService, get_environment_service
 
 SNAPSHOT_FIELDS = (
-    "temperature_c", "relative_humidity", "pm2_5", "pm10", "us_aqi",
+    "temperature_c", "relative_humidity", "pm2_5", "pm10", "china_aqi_estimate",
     "environment_timestamp", "weather_timestamp", "air_quality_timestamp",
     "environment_latitude", "environment_longitude",
+    "nitrogen_dioxide", "sulfur_dioxide", "carbon_monoxide", "ozone", "china_aqi_primary_pollutant",
 )
 FIXED_NOW = datetime.fromtimestamp(1789785000, UTC)
 
@@ -26,8 +27,8 @@ def provider_payloads():
             "current": {"time": 1789784100, "temperature_2m": 23.8, "relative_humidity_2m": 61},
         },
         "air-quality-api.open-meteo.com": {
-            "current_units": {"time": "unixtime", "pm2_5": "µg/m³", "pm10": "µg/m³", "us_aqi": "USAQI"},
-            "current": {"time": 1789783200, "pm2_5": 21.5, "pm10": 34.2, "us_aqi": 63},
+            "hourly_units": {"time": "unixtime", **{key: "µg/m³" for key in ("pm2_5", "pm10", "nitrogen_dioxide", "sulphur_dioxide", "carbon_monoxide", "ozone")}},
+            "hourly": {"time": [1789783200], "pm2_5": [21.5], "pm10": [34.2], "nitrogen_dioxide": [20], "sulphur_dioxide": [10], "carbon_monoxide": [600], "ozone": [64]},
         },
     }
 
@@ -48,7 +49,7 @@ def test_snapshot_is_persisted_and_returned_by_all_read_endpoints(client, valid_
     assert response.status_code == 201
     record = response.json()
     assert {field: record[field] for field in SNAPSHOT_FIELDS[:5]} == {
-        "temperature_c": 23.8, "relative_humidity": 61, "pm2_5": 21.5, "pm10": 34.2, "us_aqi": 63,
+        "temperature_c": 23.8, "relative_humidity": 61, "pm2_5": 21.5, "pm10": 34.2, "china_aqi_estimate": 35,
     }
     assert datetime.fromisoformat(record["environment_timestamp"]) == FIXED_NOW
     assert record["timestamp"] == "2026-09-17T00:30:00Z"  # Never replace observation time.
@@ -59,10 +60,10 @@ def test_snapshot_is_persisted_and_returned_by_all_read_endpoints(client, valid_
     # Read actual SQLite values, then use a new app/connection to verify durability.
     with closing(sqlite3.connect(database_path)) as connection:
         row = connection.execute(
-            "SELECT temperature_c, relative_humidity, pm2_5, pm10, us_aqi, environment_timestamp FROM symptom_records WHERE id = ?",
+            "SELECT temperature_c, relative_humidity, pm2_5, pm10, china_aqi_estimate, environment_timestamp FROM symptom_records WHERE id = ?",
             (record["id"],),
         ).fetchone()
-        assert row[:5] == (23.8, 61, 21.5, 34.2, 63)
+        assert row[:5] == (23.8, 61, 21.5, 34.2, 35)
         assert row[5] is not None
     with TestClient(create_app(database_path)) as restarted:
         assert restarted.get(f"/symptoms/{record['id']}").json() == record
@@ -105,10 +106,11 @@ def test_unexpected_enrichment_error_also_preserves_observation(client, valid_re
 def test_partial_snapshot_preserves_missing_values_and_actual_zeros(client, valid_record, provider_payloads):
     provider_payloads["api.open-meteo.com"]["current"].update(temperature_2m=0)
     provider_payloads["api.open-meteo.com"]["current"].pop("relative_humidity_2m")
-    provider_payloads["air-quality-api.open-meteo.com"]["current"].update(pm2_5=None, pm10=0, us_aqi=0)
+    provider_payloads["air-quality-api.open-meteo.com"]["hourly"].update(pm2_5=[None], pm10=[0])
     use_provider(client, provider_payloads)
     record = client.post("/symptoms", json=valid_record).json()
-    assert record["temperature_c"] == record["pm10"] == record["us_aqi"] == 0
+    assert record["temperature_c"] == record["pm10"] == 0
+    assert record["china_aqi_estimate"] is None
     assert record["pm2_5"] is None and record["relative_humidity"] is None
     assert client.get("/symptoms").json() == [record]
 

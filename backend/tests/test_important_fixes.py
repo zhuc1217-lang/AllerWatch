@@ -134,8 +134,8 @@ def providers(weather_time=NOW, air_time=NOW):
     return {
         "api.open-meteo.com": {"current_units": {"time": "unixtime", "temperature_2m": "°C", "relative_humidity_2m": "%"},
             "current": {"time": weather_time.timestamp(), "temperature_2m": 0, "relative_humidity_2m": 60}},
-        "air-quality-api.open-meteo.com": {"current_units": {"time": "unixtime", "pm2_5": "µg/m³", "pm10": "µg/m³", "us_aqi": "USAQI"},
-            "current": {"time": air_time.timestamp(), "pm2_5": 0, "pm10": 20, "us_aqi": 40}},
+        "air-quality-api.open-meteo.com": {"hourly_units": {"time": "unixtime", **{key: "µg/m³" for key in ("pm2_5", "pm10", "nitrogen_dioxide", "sulphur_dioxide", "carbon_monoxide", "ozone")}},
+            "hourly": {"time": [air_time.timestamp()], "pm2_5": [0], "pm10": [20], "nitrogen_dioxide": [20], "sulphur_dioxide": [10], "carbon_monoxide": [600], "ozone": [64]}},
     }
 
 
@@ -180,7 +180,7 @@ def test_both_stale_is_controlled_unavailable_and_still_saves_symptoms(client, v
     assert client.get("/environment/current").status_code == 503
     saved = client.post("/symptoms", json={**valid_record, "timestamp": NOW.isoformat(), "is_synthetic": False})
     assert saved.status_code == 201
-    assert all(saved.json()[field] is None for field in ["pm2_5", "pm10", "us_aqi", "temperature_c", "relative_humidity", "environment_timestamp"])
+    assert all(saved.json()[field] is None for field in ["pm2_5", "pm10", "china_aqi_estimate", "temperature_c", "relative_humidity", "environment_timestamp"])
 
 
 def test_legacy_metadata_migration_is_nullable_preserving_and_idempotent(tmp_path):

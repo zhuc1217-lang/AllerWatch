@@ -82,7 +82,7 @@ export function isLaggedResponse(value: unknown, mode: DatasetMode): value is La
     matching.method !== 'same_record_0h_backward_source_time_other_lags' ||
     matching.nonzero_source_record_and_retrieval_before_target !== true || matching.cross_provenance_matching !== false ||
     typeof matching.zero_lag_note !== 'string' || !object(matching.exposure_time_fields) ||
-    matching.exposure_time_fields.pm2_5 !== 'air_quality_timestamp' || matching.exposure_time_fields.us_aqi !== 'air_quality_timestamp' ||
+    matching.exposure_time_fields.pm2_5 !== 'air_quality_timestamp' || matching.exposure_time_fields.china_aqi_estimate !== 'air_quality_timestamp' ||
     matching.exposure_time_fields.relative_humidity !== 'weather_timestamp') return false
   const items = value.results, minimum = value.minimum_pairs
   return items.length === 12 && lagExposures.every(variable => lagHours.every(lag =>

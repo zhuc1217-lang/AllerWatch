@@ -12,7 +12,7 @@ function fixture(mode = 'synthetic_only') {
     p_value_method: 'two_sided_asymptotic_unadjusted', lags_hours: [0, 6, 12, 24],
     matching: { approximate: true, tolerance_hours: 3, timezone: 'UTC',
       method: 'same_record_0h_backward_source_time_other_lags',
-      exposure_time_fields: { pm2_5: 'air_quality_timestamp', us_aqi: 'air_quality_timestamp', relative_humidity: 'weather_timestamp' },
+      exposure_time_fields: { pm2_5: 'air_quality_timestamp', china_aqi_estimate: 'air_quality_timestamp', relative_humidity: 'weather_timestamp' },
       nonzero_source_record_and_retrieval_before_target: true, cross_provenance_matching: false, zero_lag_note: 'Own snapshot' },
     results: lagExposures.flatMap(variable => lagHours.map(lag_hours => ({
       variable, lag_hours, n: 10, missing_pairs: 2, spearman_rho: 0.2, p_value: 0.3, status: 'ok',

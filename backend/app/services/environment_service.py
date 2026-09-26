@@ -16,6 +16,7 @@ from ..config import (
 )
 from ..environment_schemas import CurrentEnvironment
 from ..time_policy import Clock, ClockDependency, ENVIRONMENT_MAX_AGE_HOURS, as_utc, utc_now
+from .china_aqi import calculate_china_aqi
 
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 AIR_QUALITY_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
@@ -29,7 +30,10 @@ WEATHER_FIELDS = (
 AIR_QUALITY_FIELDS = (
     ("pm2_5", "pm2_5", "µg/m³", 0, None),
     ("pm10", "pm10", "µg/m³", 0, None),
-    ("us_aqi", "us_aqi", "USAQI", 0, None),
+    ("nitrogen_dioxide", "nitrogen_dioxide", "µg/m³", 0, None),
+    ("sulphur_dioxide", "sulfur_dioxide", "µg/m³", 0, None),
+    ("carbon_monoxide", "carbon_monoxide", "µg/m³", 0, None),
+    ("ozone", "ozone", "µg/m³", 0, None),
 )
 
 
@@ -81,6 +85,32 @@ def _normalize(payload: object, fields: tuple, *, now: datetime) -> tuple[dateti
     return (valid_time if any(value is not None for value in values.values()) else None), values
 
 
+def _normalize_hourly_air(payload: object, *, now: datetime) -> tuple[datetime | None, dict]:
+    """One latest non-future hourly slot for ALL pollutants; never fill from another hour."""
+    if not isinstance(payload, dict) or payload.get("error"):
+        return None, {}
+    hourly, units = payload.get("hourly"), payload.get("hourly_units")
+    if not isinstance(hourly, dict) or not isinstance(units, dict):
+        return None, {}
+    times = hourly.get("time")
+    if not isinstance(times, list) or not times or units.get("time") != "unixtime":
+        return None, {}
+    times = [_finite_number(value) for value in times]
+    # Ambiguous/invalid time axes cannot support a defensible same-hour snapshot.
+    if any(value is None for value in times) or len(set(times)) != len(times):
+        return None, {}
+    candidates = [(seconds, index) for index, seconds in enumerate(times) if seconds <= as_utc(now).timestamp()]
+    if not candidates:
+        return None, {}
+    seconds, index = max(candidates)
+    slot = {"time": seconds}
+    for provider_key, *_ in AIR_QUALITY_FIELDS:
+        values = hourly.get(provider_key)
+        slot[provider_key] = values[index] if isinstance(values, list) and len(values) == len(times) else None
+    # Reuse the established unit/range/freshness checks, including the 3h bound.
+    return _normalize({"current": slot, "current_units": units}, AIR_QUALITY_FIELDS, now=now)
+
+
 async def _fetch_source(client: httpx.AsyncClient, url: str, params: dict) -> object:
     try:
         # In addition to HTTPX's per-operation timeouts, bound the whole source call.
@@ -110,19 +140,24 @@ class EnvironmentService:
         async with httpx.AsyncClient(timeout=timeout, transport=self.transport) as client:
             weather_payload, air_payload = await asyncio.gather(
                 _fetch_source(client, WEATHER_URL, common | {"current": "temperature_2m,relative_humidity_2m", "temperature_unit": "celsius"}),
-                _fetch_source(client, AIR_QUALITY_URL, common | {"current": "pm2_5,pm10,us_aqi"}),
+                _fetch_source(client, AIR_QUALITY_URL, common | {
+                    "hourly": ",".join(field[0] for field in AIR_QUALITY_FIELDS),
+                    "past_hours": 3, "forecast_hours": 1,
+                }),
             )
         completed = as_utc(self.clock())
         weather = _normalize(weather_payload, WEATHER_FIELDS, now=completed)
-        air = _normalize(air_payload, AIR_QUALITY_FIELDS, now=completed)
+        air = _normalize_hourly_air(air_payload, now=completed)
         values = {key: None for _, key, *_ in (*WEATHER_FIELDS, *AIR_QUALITY_FIELDS)}
         values.update(weather[1])
         values.update(air[1])
         if all(value is None for value in values.values()):
             raise EnvironmentUnavailable(UNAVAILABLE_MESSAGE)
+        estimate = calculate_china_aqi(**{key: values[key] for _, key, *_ in AIR_QUALITY_FIELDS})
         return CurrentEnvironment(
             timestamp=completed, weather_timestamp=weather[0], air_quality_timestamp=air[0],
             status="available" if all(value is not None for value in values.values()) else "partial",
+            china_aqi_estimate=estimate.aqi, china_aqi_primary_pollutant=estimate.primary_pollutant,
             latitude=settings.latitude, longitude=settings.longitude, **values,
         )
 

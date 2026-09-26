@@ -41,7 +41,12 @@ export type SymptomRecord = Omit<SymptomRecordInput, 'is_synthetic'> & {
   relative_humidity?: number | null
   pm2_5?: number | null
   pm10?: number | null
-  us_aqi?: number | null
+  nitrogen_dioxide?: number | null
+  sulfur_dioxide?: number | null
+  carbon_monoxide?: number | null
+  ozone?: number | null
+  china_aqi_estimate?: number | null
+  china_aqi_primary_pollutant?: string | null
   environment_timestamp?: string | null
   weather_timestamp?: string | null
   air_quality_timestamp?: string | null
@@ -49,5 +54,5 @@ export type SymptomRecord = Omit<SymptomRecordInput, 'is_synthetic'> & {
   environment_longitude?: number | null
   // Server-computed time eligibility only; raw values may still be missing.
   // Older responses without these flags remain readable, but cannot form analytic pairs.
-  environment_time_eligible?: Record<'pm2_5' | 'pm10' | 'us_aqi' | 'relative_humidity' | 'temperature_c', boolean>
+  environment_time_eligible?: Record<'pm2_5' | 'pm10' | 'china_aqi_estimate' | 'relative_humidity' | 'temperature_c', boolean>
 }

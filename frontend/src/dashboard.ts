@@ -3,7 +3,7 @@ import type { SymptomRecord } from './types/symptoms'
 
 export type DashboardRange = '7' | '30' | '90' | 'all'
 export type ObservationType = 'all' | 'real' | 'synthetic'
-export type ExposureKey = 'pm2_5' | 'us_aqi' | 'relative_humidity'
+export type ExposureKey = 'pm2_5' | 'china_aqi_estimate' | 'relative_humidity'
 export type MetricKey = 'tnss' | ExposureKey
 
 export const timeRanges: { value: DashboardRange; label: string }[] = [
@@ -15,7 +15,7 @@ export const observationTypes: { value: ObservationType; label: string }[] = [
 ]
 export const exposureMetrics: { key: ExposureKey; label: string; unit: string; axis: string; title: string }[] = [
   { key: 'pm2_5', label: 'PM2.5', unit: 'µg/m³', axis: 'PM2.5 (µg/m³)', title: 'PM2.5 Over Time' },
-  { key: 'us_aqi', label: 'US AQI', unit: '', axis: 'US AQI (index)', title: 'US AQI Over Time' },
+  { key: 'china_aqi_estimate', label: 'China AQI (estimated)', unit: '', axis: 'China AQI (estimated) (index)', title: 'China AQI (estimated) Over Time' },
   { key: 'relative_humidity', label: 'Relative humidity', unit: '%', axis: 'Humidity (%)', title: 'Relative Humidity Over Time' },
 ]
 
@@ -38,7 +38,7 @@ export function summarizeDashboard(records: SymptomRecord[]) {
     firstTimestamp: ordered.at(-1)?.timestamp ?? null,
     lastTimestamp: ordered[0]?.timestamp ?? null,
     missingPm25: records.filter(record => metricValue(record, 'pm2_5') === null).length,
-    missingAqi: records.filter(record => metricValue(record, 'us_aqi') === null).length,
+    missingAqi: records.filter(record => metricValue(record, 'china_aqi_estimate') === null).length,
     missingHumidity: records.filter(record => metricValue(record, 'relative_humidity') === null).length,
   }
 }

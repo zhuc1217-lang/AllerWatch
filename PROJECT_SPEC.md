@@ -1,6 +1,6 @@
 # AllerWatch: A Longitudinal Health Data Platform for Allergic Rhinitis
 
-This file is the single source of truth for **current behaviour**, updated 2026-09-24 for public-demo deployment preparation. C1 and IMPORTANT audit fixes I1–I6 remain in place. Archived plans and dated reports are historical evidence, not current requirements.
+This file is the single source of truth for **current behaviour**, updated 2026-09-26 for China AQI estimates; public-demo deployment preparation remains in place. C1 and IMPORTANT audit fixes I1–I6 remain in place. Archived plans and dated reports are historical evidence, not current requirements.
 
 ## CURRENT BEHAVIOUR
 
@@ -30,7 +30,7 @@ Local data defaults to data/private/allerwatch.sqlite3, resolved from the reposi
 
 PUBLIC_DEMO_MODE defaults to false. When true, use a clean database at DATABASE_PATH (default data/public_demo/allerwatch.sqlite3). Refuse the private directory, aliases of the known private DB, and any existing database without the public-demo marker. Never copy/load the private DB to initialize a demo. Marked demo databases containing real rows refuse startup without deleting or relabelling them.
 
-Reuse the unchanged synthetic builders with seed 42, 90 past UTC days ending yesterday, and matching daily summaries. Seed in one transaction only when both health tables are empty; never append another dataset on a populated/partially populated database. The Render instructions use a disposable /tmp database and a single instance/worker; resets generate fresh synthetic data. No persistent disk or cloud resource has been created.
+Reuse the offline synthetic builders with seed 42, 90 past UTC days ending yesterday, and matching daily summaries. Seed in one transaction only when both health tables are empty; never append another dataset on a populated/partially populated database. The Render instructions use a disposable /tmp database and a single instance/worker; resets generate fresh synthetic data. No persistent disk or cloud resource has been created.
 
 GET /config returns only public_demo_mode. The frontend displays “Demo mode — do not enter real health information” and waits for this mode before enabling saves. In demo mode both forms submit fictional data, the server forces is_synthetic=true regardless of the submitted flag, and daily reads/updates target synthetic records. Demo Analysis initially selects synthetic_only; API defaults and statistical calculations stay unchanged. Local mode keeps real-data submission and existing dataset separation. This shared unauthenticated demo is not suitable for private observations; synthetic labels do not anonymize entered text. All scientific disclaimers remain.
 
@@ -44,7 +44,9 @@ The shared Style D UI and existing charts/filters remain. DEPLOYMENT.md specifie
 - Overall severity: strict integer 0–10; medication_taken boolean; notes optional.
 - is_synthetic boolean, default false.
 - TNSS = nasal_congestion + sneezing + runny_nose + nasal_itching, range 0–12. A calculated read-only model property; never independently entered or stored. Eye symptoms and overall severity are excluded.
-- Nullable temperature_c (°C), relative_humidity (%), pm2_5 and pm10 (µg/m³), us_aqi (index).
+- Nullable temperature_c (°C), relative_humidity (%), pm2_5, pm10, nitrogen_dioxide, sulfur_dioxide, carbon_monoxide and ozone (all µg/m³).
+- Nullable china_aqi_estimate (integer 0–500) and china_aqi_primary_pollutant (text; comma-separated ties, null when unavailable or AQI ≤50).
+- us_aqi is a deprecated legacy column/read-only API field; never used in new snapshots, displays, statistics or model features. Existing values are retained unchanged.
 - Nullable environment_timestamp = retrieval completion; weather_timestamp and air_quality_timestamp = provider valid times; saved monitoring latitude/longitude.
 - API-only environment_time_eligible flags are computed per exposure, not persisted.
 
@@ -71,7 +73,7 @@ received_at records server acceptance after input validation, before enrichment.
 
 Startup registers both models and creates missing tables. For existing tables, inspect actual columns, obtain a write reservation, make one consistent private SQLite backup (including committed WAL content) through SQLite's backup API, then add missing environmental/provenance columns in one explicit transaction. Roll back column additions on failure; a failed backup prevents additions. Never rebuild/delete the database to migrate.
 
-New nullable columns: symptom_records.received_at and daily_health_records.updated_at. Legacy rows retain nulls. Existing values, IDs, constraints and indexes are preserved. Repeat startup is idempotent; fresh databases need no migration backup. Backups remain in data/private/backups and are private. Addition of a missing whole table uses SQLAlchemy create_all.
+Nullable migration columns include symptom_records.received_at, daily_health_records.updated_at, and the four additional gases plus china_aqi_estimate and china_aqi_primary_pollutant. Legacy rows retain nulls. Existing values, IDs, constraints and indexes are preserved. Repeat startup is idempotent; fresh databases need no migration backup. Backups remain in data/private/backups and are private. Addition of a missing whole table uses SQLAlchemy create_all.
 
 ### APIs and data flow
 
@@ -95,6 +97,22 @@ Preserve the other provider's usable values in a partial response. If all values
 
 Provider valid time and retrieval time are always separate. Freshness applies to new retrieval only and never rewrites stored snapshots.
 
+### China AQI estimate — HJ 633—2026
+
+China AQI estimates are calculated according to HJ 633—2026 using modelled pollutant concentrations provided by Open-Meteo. They are intended for exploratory analysis and are not equivalent to AQI published by an official environmental monitoring station.
+
+Use one central backend calculator for live snapshots and generated synthetic records. Apply the realtime breakpoint tables with linear interpolation and upward integer rounding, then take the maximum of all six IAQIs, capped at 500. For hourly SO2 >800 µg/m³ use IAQI 200. CO remains raw µg/m³ in DB/API, divided by 1000 inside the calculator for mg/m³ breakpoints. Missing/invalid required pollutant => null estimate and null primary pollutant; preserve other raw values, including real zero. Assign all tied maximum pollutant labels only when AQI >50.
+
+Request six hourly pollutant arrays (Open-Meteo calls SO2 sulphur_dioxide; our field is sulfur_dioxide). Select the latest non-future valid time within [R−3h,R] after both requests finish. All pollutant values must come from that one array index; no borrowing from older/future hours. Malformed/missing arrays or wrong units make that pollutant unavailable. Existing weather timing, freshness, C1, lag and prediction-availability rules remain unchanged.
+
+Open-Meteo describes its hourly concentrations as instantaneous model values. They approximate, rather than verify, the monitored one-hour concentration basis of the standard; provider spatial/temporal modelling further limits interpretation. This is not official station AQI or exact personal exposure. PM2.5 and PM10 remain independent analytical variables.
+
+Keep old us_aqi only as deprecated storage/read-only compatibility. Do not request, display or analyse it. Descriptive statistics, ordinary/lag associations, relationship plots and the model now use china_aqi_estimate. Existing snapshots are not backfilled; old AQI values cannot be converted without all six concentrations. Entirely missing training columns remain omitted, so legacy-only datasets currently fit six environmental/symptom predictors rather than seven. Other statistical methods, splits and provenance modes remain unchanged.
+
+Synthetic generation adds noisy persistent gases on an independent seed stream; it does not modify the existing symptom formula, original random stream, or outcomes to improve results. Approximately 6% of records retain environmental missingness; unavailable required pollutants produce null AQI. Existing synthetic records are not rewritten/reseeded during migration. Public demo first-start/empty-only seeding and private DB isolation are unchanged.
+
+Full methodology/API units: [docs/CHINA_AQI.md](docs/CHINA_AQI.md). Official reference: [HJ 633—2026, Technical specifications on ambient air quality index](https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/202602/t20260225_1144441.shtml), Ministry of Ecology and Environment of the People's Republic of China, effective 1 March 2026.
+
 ### Raw snapshots versus analytic contemporaneous exposure (C1)
 
 A historical symptom submitted today may store today's current snapshot. **Temporal co-storage is not temporal alignment.** History, raw descriptive summaries and raw environmental trends retain stored values and label them accurately.
@@ -107,7 +125,7 @@ Each exposure partitions selected record_count into **aligned n + temporally_exc
 
 All non-model analyses support real_only, synthetic_only and all, default real_only even when insufficient. Responses identify record count, real/synthetic counts, mode and date range. All mode explicitly labels included synthetic development data. It does not combine different provenance when looking up a lag source or daily summary.
 
-Descriptive statistics cover TNSS, overall severity and five raw environmental variables: n, missing, mean, median, sample SD (ddof=1), min, Q1, Q3, max. Linear percentiles; null estimates for empty data, SD null when n<2. No imputation, missing-to-zero conversion, interpolation or automatic outlier removal.
+Descriptive statistics cover TNSS, overall severity, temperature, humidity, PM2.5, PM10 and China AQI (estimated): n, missing, mean, median, sample SD (ddof=1), min, Q1, Q3, max. Linear percentiles; null estimates for empty data, SD null when n<2. No imputation, missing-to-zero conversion, interpolation or automatic outlier removal.
 
 Ordinary environmental Spearman uses temporally eligible pairwise-complete observations, minimum **10 pairs**, at least two distinct values in each variable; otherwise insufficient_data or insufficient_variation. Report rho and unadjusted two-sided asymptotic p-value; non-finite output becomes unavailable. P-values are exploratory, do not establish causality, and do not account for dependent repeated observations or multiple comparisons.
 
@@ -119,7 +137,7 @@ Daily health joins use (symptom timestamp converted to UTC+08:00 calendar date, 
 
 Target: the NEXT chronological symptom observation has TNSS ≥6, an operational research threshold. Features come from the previous report or earlier and must precede the target; no current-target score/exposure, medication, random shuffle, oversampling or test-set feature selection.
 
-The current synthetic demonstration has **seven active predictors**: previous TNSS, previous overall severity, PM2.5, PM10, US AQI, humidity and temperature. Entirely missing training columns are omitted. All four previous-day lifestyle candidates remain excluded because historical availability cannot safely be proven. New daily updated_at does not reconstruct legacy values or enable lifestyle features in this milestone.
+The model has **seven environmental/symptom candidate predictors** (entirely missing training columns are omitted): previous TNSS, previous overall severity, PM2.5, PM10, China AQI (estimated), humidity and temperature. Entirely missing training columns are omitted. All four previous-day lifestyle candidates remain excluded because historical availability cannot safely be proven. New daily updated_at does not reconstruct legacy values or enable lifestyle features in this milestone.
 
 Preserve the conservative availability rule: real records still require environmental retrieval metadata; a known received_at adds a lower bound to report availability. Legacy unknown receipt remains null, with the existing documented report/retrieval proxy unchanged. Only generated synthetic outages have the simulation reporting-time fallback. Do not enable real outage rows merely because a receipt field now exists. Predictions and training labels must have become available before the relevant target/split boundary.
 

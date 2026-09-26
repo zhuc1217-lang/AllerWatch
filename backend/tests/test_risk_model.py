@@ -22,7 +22,7 @@ def records(n=51, synthetic=True):
             runny_nose=min(max(score - 6, 0), 3), nasal_itching=max(score - 9, 0),
             eye_symptoms=3, overall_severity=i % 11, medication_taken=True, is_synthetic=synthetic,
             temperature_c=18 + i % 6, relative_humidity=40 + i % 30,
-            pm2_5=10 + i, pm10=20 + 2 * i, us_aqi=40 + i,
+            pm2_5=10 + i, pm10=20 + 2 * i, china_aqi_estimate=40 + i,
             environment_timestamp=stamp + timedelta(seconds=3),
             weather_timestamp=stamp - timedelta(minutes=15), air_quality_timestamp=stamp - timedelta(hours=1)))
     return result
@@ -89,7 +89,7 @@ def test_future_source_valid_times_are_missing_even_if_downloaded_before_target(
     data = records(2)
     setattr(data[0], field, data[0].timestamp + timedelta(seconds=1))
     features = risk.build_model_rows(data, [], 'synthetic_only').rows[0].features
-    fields = ('pm2_5', 'pm10', 'us_aqi') if field == 'air_quality_timestamp' else ('temperature_c', 'relative_humidity')
+    fields = ('pm2_5', 'pm10', 'china_aqi_estimate') if field == 'air_quality_timestamp' else ('temperature_c', 'relative_humidity')
     assert all(features[name] is None for name in fields)
 
 

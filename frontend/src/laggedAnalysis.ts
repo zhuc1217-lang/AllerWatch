@@ -1,7 +1,7 @@
 import type { LagExposure, LagHours } from './types/analysis'
 
 export const lagHours: LagHours[] = [0, 6, 12, 24]
-export const lagExposures: LagExposure[] = ['pm2_5', 'us_aqi', 'relative_humidity']
+export const lagExposures: LagExposure[] = ['pm2_5', 'china_aqi_estimate', 'relative_humidity']
 
 export function lagCellBackground(rho: number | null): string {
   if (rho === null || !Number.isFinite(rho)) return '#f3f4f3'

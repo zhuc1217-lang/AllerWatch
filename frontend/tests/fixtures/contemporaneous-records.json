@@ -14,7 +14,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-09-01T12:00:00Z",
@@ -23,7 +23,7 @@
     "environment_time_eligible": {
       "pm2_5": true,
       "pm10": true,
-      "us_aqi": true,
+      "china_aqi_estimate": true,
       "relative_humidity": true,
       "temperature_c": true
     }
@@ -43,7 +43,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-10-01T12:00:00Z",
@@ -52,7 +52,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }
@@ -72,7 +72,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-09-01T12:00:01Z",
@@ -81,7 +81,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }
@@ -101,7 +101,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": null,
@@ -110,7 +110,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }
@@ -130,7 +130,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-09-01T08:59:59Z",
@@ -139,7 +139,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }
@@ -159,7 +159,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-09-01T12:00:00Z",
@@ -168,7 +168,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }
@@ -188,7 +188,7 @@
     "is_synthetic": true,
     "pm2_5": 0,
     "pm10": 0,
-    "us_aqi": 0,
+    "china_aqi_estimate": 0,
     "relative_humidity": 0,
     "temperature_c": 0,
     "weather_timestamp": "2026-09-01T12:00:00Z",
@@ -197,7 +197,7 @@
     "environment_time_eligible": {
       "pm2_5": true,
       "pm10": true,
-      "us_aqi": true,
+      "china_aqi_estimate": true,
       "relative_humidity": true,
       "temperature_c": true
     }
@@ -217,7 +217,7 @@
     "is_synthetic": true,
     "pm2_5": 21,
     "pm10": 21,
-    "us_aqi": 21,
+    "china_aqi_estimate": 21,
     "relative_humidity": 21,
     "temperature_c": 21,
     "weather_timestamp": "2026-09-01T12:00:00Z",
@@ -226,7 +226,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": true,
       "temperature_c": true
     }
@@ -246,7 +246,7 @@
     "is_synthetic": true,
     "pm2_5": null,
     "pm10": null,
-    "us_aqi": null,
+    "china_aqi_estimate": null,
     "relative_humidity": null,
     "temperature_c": null,
     "weather_timestamp": "2026-09-01T12:00:00Z",
@@ -255,7 +255,7 @@
     "environment_time_eligible": {
       "pm2_5": false,
       "pm10": false,
-      "us_aqi": false,
+      "china_aqi_estimate": false,
       "relative_humidity": false,
       "temperature_c": false
     }

@@ -79,11 +79,23 @@ $env:ALLERWATCH_LONGITUDE = '-0.1278'
 
 Public London defaults identify a monitoring location, not the user's inferred location. No geolocation or .env loader is used. Monitoring coordinates and the study calendar are independent.
 
-GET /environment/current retrieves temperature (°C), humidity (%), PM2.5/PM10 (µg/m³) and US AQI. Providers return UTC Unix timestamps. Capture one injected UTC clock after both calls complete as retrieval R. Independently require provider valid time V in **[R − 3 hours, R]**, inclusive; no future-valid allowance. This is an engineering freshness policy, not a medical threshold.
+GET /environment/current retrieves temperature (°C), humidity (%), PM2.5/PM10, NO2, SO2, CO and O3 (all stored in µg/m³), and locally calculated China AQI (estimated). Providers return UTC Unix timestamps. Capture one injected UTC clock after both calls complete as retrieval R. Independently require provider valid time V in **[R − 3 hours, R]**, inclusive; no future-valid allowance. This is an engineering freshness policy, not a medical threshold.
 
 Stale, future, missing or malformed source times make that provider unavailable; the other provider may produce a partial response. No usable values gives controlled HTTP 503. Missing remains null, never zero. Valid and retrieval times stay separate. Requests run in parallel with 10-second total, 8-second I/O and 4-second connection limits per provider, without retries.
 
 Homepage refresh and symptom submission retrieve current data. There is no continuous environmental series, background sync, raw-response archive or historical backfill. Environmental failure never blocks valid symptom logging; saved snapshots are never refreshed on read.
+
+### China AQI (estimated)
+
+China AQI estimates are calculated according to HJ 633—2026 using modelled pollutant concentrations provided by Open-Meteo. They are intended for exploratory analysis and are not equivalent to AQI published by an official environmental monitoring station.
+
+The central backend calculator uses the standard's realtime breakpoints, linear IAQI interpolation, upward integer rounding, a maximum over all six pollutants, and a 500 representation cap. CO is stored in µg/m³ and converted to mg/m³ only inside the calculator; SO2 above 800 µg/m³ has hourly IAQI 200. One missing/invalid pollutant makes the full estimate null. Raw PM and gas readings remain available independently.
+
+Air quality now requests hourly concentrations and selects the latest non-future slot within the unchanged three-hour freshness window; no cross-hour substitution. Open-Meteo hourly instantaneous model output approximates the standard's monitored hourly means, so this remains an estimate. No 24-hour AQI, official station result, safety category or medical interpretation is claimed.
+
+Legacy snapshots lack the additional gases: **their China AQI remains null**, without converting the old index or inventing history. The additive migration backs up SQLite first and preserves existing rows and the deprecated us_aqi column. Model training omits an entirely absent AQI column using its existing training-only rule. Fresh synthetic data use the same calculator and a separate gas RNG, preserving the original symptom/PM simulation; existing demo databases are not silently regenerated.
+
+Method, complete field/units reference, breakpoints and examples: [docs/CHINA_AQI.md](docs/CHINA_AQI.md). Official reference: [HJ 633—2026, Technical specifications on ambient air quality index](https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/202602/t20260225_1144441.shtml), Ministry of Ecology and Environment of the People's Republic of China, effective **1 March 2026**.
 
 ### Raw snapshots versus analytic relationships
 
@@ -106,7 +118,7 @@ Local Analysis defaults to real_only even when insufficient; the public demo pag
 
 The experiment evaluates whether the **next observation has TNSS ≥6**, using prior information. It is a research pipeline, not a clinical model or individual probability service.
 
-The current synthetic demonstration has **seven active predictors**: previous TNSS, previous overall severity, PM2.5, PM10, US AQI, humidity and temperature. **Sleep duration, sleep quality, stress and exercise remain excluded** because historical availability cannot safely be established. New updated_at does not reconstruct diary versions or enable lifestyle features.
+The model has **seven environmental/symptom candidate predictors** (entirely missing training columns are omitted): previous TNSS, previous overall severity, PM2.5, PM10, China AQI (estimated), humidity and temperature. **Sleep duration, sleep quality, stress and exercise remain excluded** because historical availability cannot safely be established. New updated_at does not reconstruct diary versions or enable lifestyle features.
 
 Preserve the conservative report/retrieval availability rule; known received_at adds a lower bound, preventing late-entered information from moving predictions earlier. Legacy receipt stays unknown. Real records without retrieval metadata remain excluded even when receipt is known; only generated synthetic outages have a reporting-time fallback.
 

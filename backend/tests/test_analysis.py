@@ -21,7 +21,7 @@ def observation(index=0, synthetic=False, **changes):
                   nasal_congestion=index % 4, sneezing=1, runny_nose=2, nasal_itching=0,
                   eye_symptoms=3, overall_severity=5, medication_taken=False,
                   is_synthetic=synthetic, pm2_5=float(index), pm10=20.0,
-                  us_aqi=None, relative_humidity=60.0, temperature_c=20.0)
+                  china_aqi_estimate=None, relative_humidity=60.0, temperature_c=20.0)
     values.update(changes)
     return SymptomRecord(**values)
 
@@ -158,7 +158,7 @@ def test_api_filtering_metadata_counts_and_no_writes(client, endpoint, mode, rea
         assert set(data["variables"]) == set(VARIABLES)
         assert data["variables"]["pm2_5"]["n"] == synthetic
         assert data["variables"]["pm2_5"]["missing"] == real
-        assert data["variables"]["us_aqi"]["mean"] is None
+        assert data["variables"]["china_aqi_estimate"]["mean"] is None
         assert data["standard_deviation"] == "sample_ddof_1"
     else:
         assert data["minimum_pairs"] == 10

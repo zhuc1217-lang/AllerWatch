@@ -1,3 +1,4 @@
+import ChinaAqiNote from '../components/ChinaAqiNote'
 import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getAnalysis } from '../api/analysis'
@@ -26,7 +27,7 @@ function CoefficientChart({ results }: { results: AssociationResult[] }) {
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis type="number" domain={[-1, 1]} ticks={[-1, -0.5, 0, 0.5, 1]}
               tick={{ fontSize: 12 }} label={{ value: 'Spearman rho (ρ)', position: 'bottom', offset: 10 }} />
-            <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 12 }} tickLine={false} />
+            <YAxis type="category" dataKey="label" width={155} tick={{ fontSize: 11 }} tickLine={false} />
             <Tooltip formatter={value => [formatStatistic(typeof value === 'number' ? value : null, 3), 'Spearman rho']}
               contentStyle={{ fontSize: 13, borderColor: 'var(--border-strong)' }} cursor={false} />
             <ReferenceLine x={0} stroke="var(--ink)" strokeWidth={2} />
@@ -129,6 +130,7 @@ export default function Analysis() {
         <p className="analysis-caption">Source valid time must be within the {data.associations.temporal_tolerance_hours} hours preceding the symptom time, including both boundaries. Retrieval must exist and be at or after source time; it may follow symptom submission. No historical exposure is inferred or substituted.</p>
       </section>
       <CoefficientChart results={data.associations.associations} />
+      <ChinaAqiNote />
       <LaggedAssociations dataset={summary} />
       <DailyHealthAssociations dataset={summary} />
       <RiskModel dataset={summary} />

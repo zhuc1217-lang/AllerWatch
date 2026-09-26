@@ -6,7 +6,7 @@ import type { SymptomRecord } from '../types/symptoms'
 
 const realColour = 'var(--chart-sage)'
 const syntheticColour = 'var(--chart-synthetic)'
-const metricColour = (metric: MetricKey) => metric === 'us_aqi' ? 'var(--chart-ochre)'
+const metricColour = (metric: MetricKey) => metric === 'china_aqi_estimate' ? 'var(--chart-ochre)'
   : metric === 'relative_humidity' ? 'var(--chart-blue)' : 'var(--chart-sage)'
 const tick = { fontSize: 11, fill: 'var(--muted)' }
 const margin = { top: 12, right: 16, left: 0, bottom: 14 }
@@ -67,7 +67,8 @@ export function TrendChart({ records, metric, title, subtitle }: {
   const last = data.at(-1)?.timestamp ?? first
   const domain = first === last ? [first - 3600000, last + 3600000] : [first, last]
   const exposure = exposureMetrics.find(item => item.key === metric)
-  const label = metric === 'tnss' ? 'TNSS' : exposure!.axis
+  // The full estimate name is in the title/tooltip; keep the narrow vertical axis readable.
+  const label = metric === 'tnss' ? 'TNSS' : metric === 'china_aqi_estimate' ? 'AQI (index)' : exposure!.axis
   return (
     <section className="dashboard-card dashboard-chart-card" aria-labelledby={`trend-${metric}`} data-chart={`trend-${metric}`}>
       <h3 id={`trend-${metric}`}>{title}</h3>

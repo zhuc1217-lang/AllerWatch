@@ -15,7 +15,7 @@ def record(time=BASE, tnss=4, pm=10.0, synthetic=True, **changes):
     values = dict(timestamp=time, nasal_congestion=min(tnss, 3), sneezing=min(max(tnss - 3, 0), 3),
         runny_nose=min(max(tnss - 6, 0), 3), nasal_itching=min(max(tnss - 9, 0), 3),
         eye_symptoms=3, overall_severity=5, medication_taken=False, is_synthetic=synthetic,
-        pm2_5=pm, us_aqi=pm, relative_humidity=pm,
+        pm2_5=pm, china_aqi_estimate=pm, relative_humidity=pm,
         environment_timestamp=time, air_quality_timestamp=time, weather_timestamp=time,
         environment_latitude=51.5, environment_longitude=0.0)
     values.update(changes)

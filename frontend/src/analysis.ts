@@ -5,14 +5,14 @@ export const datasetOptions: { value: DatasetMode; label: string }[] = [
   { value: 'synthetic_only', label: 'Synthetic data' },
   { value: 'all', label: 'All data' },
 ]
-export const exposureKeys: Exposure[] = ['pm2_5', 'pm10', 'us_aqi', 'relative_humidity', 'temperature_c']
+export const exposureKeys: Exposure[] = ['pm2_5', 'pm10', 'china_aqi_estimate', 'relative_humidity', 'temperature_c']
 export const variableKeys: AnalysisVariable[] = ['tnss', 'overall_severity', ...exposureKeys]
 export const variableLabels: Record<AnalysisVariable, string> = {
   tnss: 'TNSS (0–12)', overall_severity: 'Overall severity (0–10)', pm2_5: 'PM2.5 (µg/m³)',
-  pm10: 'PM10 (µg/m³)', us_aqi: 'US AQI (index)', relative_humidity: 'Humidity (%)', temperature_c: 'Temperature (°C)',
+  pm10: 'PM10 (µg/m³)', china_aqi_estimate: 'China AQI (estimated) (index)', relative_humidity: 'Humidity (%)', temperature_c: 'Temperature (°C)',
 }
 export const exposureLabels: Record<Exposure, string> = {
-  pm2_5: 'PM2.5', pm10: 'PM10', us_aqi: 'US AQI', relative_humidity: 'Humidity', temperature_c: 'Temperature',
+  pm2_5: 'PM2.5', pm10: 'PM10', china_aqi_estimate: 'China AQI (estimated)', relative_humidity: 'Humidity', temperature_c: 'Temperature',
 }
 export const statusLabels: Record<AssociationStatus, string> = {
   ok: 'Calculated', insufficient_data: 'Insufficient paired observations',

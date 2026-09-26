@@ -6,9 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from .environment_timing import TOLERANCE_HOURS
 
 DatasetMode = Literal["real_only", "synthetic_only", "all"]
-Exposure = Literal["pm2_5", "pm10", "us_aqi", "relative_humidity", "temperature_c"]
-Variable = Literal["tnss", "overall_severity", "temperature_c", "relative_humidity", "pm2_5", "pm10", "us_aqi"]
-EXPOSURES: tuple[Exposure, ...] = ("pm2_5", "pm10", "us_aqi", "relative_humidity", "temperature_c")
+Exposure = Literal["pm2_5", "pm10", "china_aqi_estimate", "relative_humidity", "temperature_c"]
+Variable = Literal["tnss", "overall_severity", "temperature_c", "relative_humidity", "pm2_5", "pm10", "china_aqi_estimate"]
+EXPOSURES: tuple[Exposure, ...] = ("pm2_5", "pm10", "china_aqi_estimate", "relative_humidity", "temperature_c")
 VARIABLES: tuple[Variable, ...] = ("tnss", "overall_severity", *EXPOSURES)
 MINIMUM_PAIRS = 10
 

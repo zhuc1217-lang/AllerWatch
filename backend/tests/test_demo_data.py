@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Delete
 
 from app.models import SymptomRecord
+from app.services.china_aqi import POLLUTANTS, calculate_china_aqi
 from app.schemas import SymptomRecordCreate
 from scripts import demo_data as demo
 
@@ -48,7 +49,7 @@ def test_generated_fields_ranges_missingness_and_tnss(seed):
     assert all(record.is_synthetic is True for record in records)
     assert all(record.id is None for record in records)
     assert "tnss" not in SymptomRecord.__table__.columns
-    bounds = {"temperature_c": (5, 35), "relative_humidity": (25, 95), "pm2_5": (1, 100), "pm10": (1, 160), "us_aqi": (0, 200)}
+    bounds = {"temperature_c": (5, 35), "relative_humidity": (25, 95), "pm2_5": (1, 100), "pm10": (1, 160), "china_aqi_estimate": (0, 500), "nitrogen_dioxide": (2, 160), "sulfur_dioxide": (0.5, 60), "carbon_monoxide": (100, 3000), "ozone": (5, 220)}
     missing = 0
     for record in records:
         for field in (*demo.NASAL_FIELDS, "eye_symptoms"):
@@ -64,8 +65,10 @@ def test_generated_fields_ranges_missingness_and_tnss(seed):
             assert value is None or (isinstance(value, (int, float)) and low <= value <= high)
         if record.pm2_5 is not None and record.pm10 is not None:
             assert record.pm10 >= record.pm2_5
-        if record.pm2_5 is not None and record.us_aqi is not None:
-            assert record.us_aqi == demo._synthetic_aqi(record.pm2_5)
+        estimate = calculate_china_aqi(**{key: getattr(record, key) for key in POLLUTANTS})
+        assert record.china_aqi_estimate == estimate.aqi
+        assert record.china_aqi_primary_pollutant == estimate.primary_pollutant
+        assert record.us_aqi is None
         missing += any(getattr(record, field) is None for field in demo.ENVIRONMENT_FIELDS)
         assert record.environment_latitude is record.environment_longitude is None
         if record.environment_timestamp is not None:
@@ -128,11 +131,6 @@ def test_default_window_ends_on_previous_utc_day():
 def test_invalid_end_date_is_rejected(end_date):
     with pytest.raises(demo.DemoDataError):
         demo.build_demo_records(end_date=end_date)
-
-
-@pytest.mark.parametrize("pm,expected", [(0, 0), (9, 50), (9.1, 51), (35.4, 100), (35.5, 101), (55.4, 150), (55.5, 151)])
-def test_synthetic_aqi_breakpoints(pm, expected):
-    assert demo._synthetic_aqi(pm) == expected
 
 
 def test_generate_api_delete_regenerate_preserve_all_real_fields(client, database_path, real_records):

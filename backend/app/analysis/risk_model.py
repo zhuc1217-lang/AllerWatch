@@ -23,7 +23,7 @@ from .dataset import finite_number, prepare_dataset
 from .schemas import AnalysisModel, DatasetMetadata
 
 ModelMode = Literal["real_only", "synthetic_only"]
-ENVIRONMENT = ("pm2_5", "pm10", "us_aqi", "relative_humidity", "temperature_c")
+ENVIRONMENT = ("pm2_5", "pm10", "china_aqi_estimate", "relative_humidity", "temperature_c")
 DAILY_FEATURES = ("previous_day_sleep_duration", "previous_day_sleep_quality",
                   "previous_day_stress_level", "previous_day_exercise_minutes")
 FEATURES = ("previous_tnss", "previous_overall_severity", *ENVIRONMENT, *DAILY_FEATURES)

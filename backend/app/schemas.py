@@ -49,7 +49,13 @@ class SymptomRecordRead(SymptomRecordCreate):
     relative_humidity: float | None = None
     pm2_5: float | None = None
     pm10: float | None = None
-    us_aqi: float | None = None
+    us_aqi: float | None = Field(default=None, deprecated=True, description="Legacy only; not an active exposure")
+    nitrogen_dioxide: float | None = Field(default=None, ge=0)
+    sulfur_dioxide: float | None = Field(default=None, ge=0)
+    carbon_monoxide: float | None = Field(default=None, ge=0)
+    ozone: float | None = Field(default=None, ge=0)
+    china_aqi_estimate: int | None = Field(default=None, ge=0, le=500)
+    china_aqi_primary_pollutant: str | None = None
     environment_timestamp: AwareDatetime | None = None
     weather_timestamp: AwareDatetime | None = None
     air_quality_timestamp: AwareDatetime | None = None

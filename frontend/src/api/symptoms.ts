@@ -31,10 +31,12 @@ function isSymptomRecord(value: unknown): value is SymptomRecord {
     (value.notes === null || typeof value.notes === 'string') &&
     (value.environment_time_eligible === undefined ||
       (isObject(value.environment_time_eligible) && !Array.isArray(value.environment_time_eligible) &&
-        ['pm2_5', 'pm10', 'us_aqi', 'relative_humidity', 'temperature_c'].every(
+        ['pm2_5', 'pm10', 'china_aqi_estimate', 'relative_humidity', 'temperature_c'].every(
           field => typeof (value.environment_time_eligible as Record<string, unknown>)[field] === 'boolean'))) &&
-    ['temperature_c', 'relative_humidity', 'pm2_5', 'pm10', 'us_aqi', 'environment_latitude', 'environment_longitude']
+    ['temperature_c', 'relative_humidity', 'pm2_5', 'pm10', 'nitrogen_dioxide', 'sulfur_dioxide', 'carbon_monoxide', 'ozone', 'china_aqi_estimate', 'environment_latitude', 'environment_longitude']
       .every((field) => value[field] == null || (typeof value[field] === 'number' && Number.isFinite(value[field]))) &&
+    (value.china_aqi_primary_pollutant == null || typeof value.china_aqi_primary_pollutant === 'string') &&
+    (value.china_aqi_estimate == null || isIntegerInRange(value.china_aqi_estimate, 0, 500)) &&
     ['received_at', 'environment_timestamp', 'weather_timestamp', 'air_quality_timestamp']
       .every((field) => value[field] == null || (typeof value[field] === 'string' &&
         /(?:Z|[+-]\d{2}:\d{2})$/i.test(value[field]) && Number.isFinite(Date.parse(value[field]))))

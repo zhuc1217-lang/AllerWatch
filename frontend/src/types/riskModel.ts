@@ -2,7 +2,7 @@ import type { DatasetMetadata } from './analysis'
 
 export const modelFeatureLabels = {
   previous_tnss: 'Previous TNSS', previous_overall_severity: 'Previous overall severity',
-  pm2_5: 'PM2.5', pm10: 'PM10', us_aqi: 'US AQI', relative_humidity: 'Relative humidity', temperature_c: 'Temperature',
+  pm2_5: 'PM2.5', pm10: 'PM10', china_aqi_estimate: 'China AQI (estimated)', relative_humidity: 'Relative humidity', temperature_c: 'Temperature',
   previous_day_sleep_duration: 'Previous-day sleep duration', previous_day_sleep_quality: 'Previous-day sleep quality',
   previous_day_stress_level: 'Previous-day stress', previous_day_exercise_minutes: 'Previous-day exercise',
 } as const

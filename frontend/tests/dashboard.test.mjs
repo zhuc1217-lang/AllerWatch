@@ -9,8 +9,8 @@ const record = (id, timestamp, extras = {}) => ({
   id, timestamp: typeof timestamp === 'string' ? timestamp : new Date(timestamp).toISOString(),
   nasal_congestion: 1, sneezing: 1, runny_nose: 1, nasal_itching: 1, eye_symptoms: 3,
   tnss: 8, overall_severity: 7, medication_taken: false, is_synthetic: false,
-  notes: null, pm2_5: 10, us_aqi: 40, relative_humidity: 50,
-  environment_time_eligible: { pm2_5: true, pm10: true, us_aqi: true, relative_humidity: true, temperature_c: true }, ...extras,
+  notes: null, pm2_5: 10, china_aqi_estimate: 40, relative_humidity: 50,
+  environment_time_eligible: { pm2_5: true, pm10: true, china_aqi_estimate: true, relative_humidity: true, temperature_c: true }, ...extras,
 })
 
 for (const days of [7, 30, 90]) {
@@ -40,8 +40,8 @@ test('timezone offsets, DST and stable timestamp ties retain every observation',
 
 test('summary counts missing fields separately and never treats measured zero as missing', () => {
   const rows = [
-    record(3, now, { pm2_5: null, us_aqi: 0, relative_humidity: undefined }),
-    record(1, now-day, { pm2_5: 0, us_aqi: null, relative_humidity: 0, is_synthetic: true }),
+    record(3, now, { pm2_5: null, china_aqi_estimate: 0, relative_humidity: undefined }),
+    record(1, now-day, { pm2_5: 0, china_aqi_estimate: null, relative_humidity: 0, is_synthetic: true }),
     record(2, now-day/2, { is_synthetic: true }),
   ]
   const summary = summarizeDashboard(rows)
@@ -69,7 +69,7 @@ test('empty and unmatched datasets have no latest observation or chart data', ()
   assert.deepEqual(makePairedData(empty, 'pm2_5'), [])
 })
 
-for (const key of ['pm2_5', 'us_aqi', 'relative_humidity']) {
+for (const key of ['pm2_5', 'china_aqi_estimate', 'relative_humidity']) {
   test(`${key} eligible scatter keeps zeros, drops its own missing pairs and retains provenance`, () => {
     const rows = [record(1, now-2000, { [key]: null }), record(2, now-1000, { [key]: undefined }),
       record(3, now, { [key]: 0, is_synthetic: true }), record(4, now, { [key]: 25 })]
@@ -80,7 +80,7 @@ for (const key of ['pm2_5', 'us_aqi', 'relative_humidity']) {
     assert.equal(points.length, 2) // Duplicate timestamps are not deduplicated.
     const onlyMissing = rows.slice(0, 2)
     assert.deepEqual(makePairedData(onlyMissing, key), [])
-    const other = key === 'pm2_5' ? 'us_aqi' : 'pm2_5'
+    const other = key === 'pm2_5' ? 'china_aqi_estimate' : 'pm2_5'
     assert.equal(makePairedData([record(8, now, { [key]: 5, [other]: null })], key).length, 1)
   })
 }
@@ -105,20 +105,20 @@ test('real and synthetic trend series cannot join across observation types', () 
 })
 
 test('gaps longer than 24 hours break all trend series without creating a record', () => {
-  const points = makeTrendData([record(1, now-3*day), record(2, now)], 'us_aqi')
+  const points = makeTrendData([record(1, now-3*day), record(2, now)], 'china_aqi_estimate')
   assert.equal(points.length, 3)
   assert.deepEqual(points[1], { timestamp: now-1.5*day, real: null, synthetic: null, record: null })
   assert.equal(makeTrendData([record(1, now-day), record(2, now)], 'tnss').length, 2)
 })
 
 test('single observations and constant zeros have valid axis domains without invented data', () => {
-  const rows = [record(1, now, { tnss: 0, pm2_5: 0, us_aqi: 0 })]
+  const rows = [record(1, now, { tnss: 0, pm2_5: 0, china_aqi_estimate: 0 })]
   assert.equal(makeTrendData(rows, 'tnss').length, 1)
   assert.equal(makePairedData(rows, 'pm2_5').length, 1)
   assert.deepEqual(metricDomain(rows, 'tnss'), [0, 12])
   assert.deepEqual(metricDomain(rows, 'relative_humidity'), [0, 100])
   assert.deepEqual(metricDomain(rows, 'pm2_5'), [0, 1])
-  assert.deepEqual(metricDomain([], 'us_aqi'), [0, 1])
+  assert.deepEqual(metricDomain([], 'china_aqi_estimate'), [0, 1])
 })
 
 test('null/undefined display as unavailable and actual zeros keep their units', () => {
@@ -130,12 +130,12 @@ test('null/undefined display as unavailable and actual zeros keep their units', 
 
 test('summary and chart preparation do not mutate records or supplied ordering', () => {
   const rows = Object.freeze([
-    Object.freeze(record(3, now, { is_synthetic: true, us_aqi: null })),
+    Object.freeze(record(3, now, { is_synthetic: true, china_aqi_estimate: null })),
     Object.freeze(record(1, now-day)), Object.freeze(record(2, now-day/2)),
   ])
   const copy = structuredClone(rows)
   summarizeDashboard(rows)
-  makeTrendData(rows, 'us_aqi')
+  makeTrendData(rows, 'china_aqi_estimate')
   makePairedData(rows, 'relative_humidity')
   metricDomain(rows, 'pm2_5')
   assert.deepEqual(rows, copy)
@@ -144,7 +144,7 @@ test('summary and chart preparation do not mutate records or supplied ordering',
 // These API-shaped fixtures are also checked against the actual Python eligibility
 // helper by test_environment_timing.py, so client flags cannot drift from the rule.
 const timingRecords = JSON.parse(readFileSync(new URL('./fixtures/contemporaneous-records.json', import.meta.url), 'utf8'))
-for (const key of ['pm2_5', 'us_aqi', 'relative_humidity']) {
+for (const key of ['pm2_5', 'china_aqi_estimate', 'relative_humidity']) {
   test(`${key} excludes backdated, future, stale and unverified snapshots without changing raw values`, () => {
     const before = structuredClone(timingRecords)
     const result = relationshipData(timingRecords, key)
@@ -178,7 +178,7 @@ test('a missing numerical outcome is counted once as missing, not as a temporal 
 
 test('an entirely backdated dataset yields no relationship points but retains raw history/trend data', () => {
   const backdated = timingRecords.filter(record => record.id === 2)
-  for (const key of ['pm2_5', 'us_aqi', 'relative_humidity']) {
+  for (const key of ['pm2_5', 'china_aqi_estimate', 'relative_humidity']) {
     assert.deepEqual(makePairedData(backdated, key), [])
     assert.equal(relationshipData(backdated, key).temporallyExcludedPairs, 1)
     assert.equal(makeTrendData(backdated, key)[0].synthetic, 21)

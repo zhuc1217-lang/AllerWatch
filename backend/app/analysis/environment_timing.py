@@ -9,7 +9,7 @@ TOLERANCE_HOURS = 3
 SOURCE_TIME = {
     "pm2_5": "air_quality_timestamp",
     "pm10": "air_quality_timestamp",
-    "us_aqi": "air_quality_timestamp",
+    "china_aqi_estimate": "air_quality_timestamp",
     "relative_humidity": "weather_timestamp",
     "temperature_c": "weather_timestamp",
 }

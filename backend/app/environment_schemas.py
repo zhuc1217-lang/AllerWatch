@@ -15,6 +15,11 @@ class CurrentEnvironment(BaseModel):
     relative_humidity: float | None = Field(ge=0, le=100)
     pm2_5: float | None = Field(ge=0)
     pm10: float | None = Field(ge=0)
-    us_aqi: float | None = Field(ge=0)
+    nitrogen_dioxide: float | None = Field(default=None, ge=0)
+    sulfur_dioxide: float | None = Field(default=None, ge=0)
+    carbon_monoxide: float | None = Field(default=None, ge=0)
+    ozone: float | None = Field(default=None, ge=0)
+    china_aqi_estimate: int | None = Field(default=None, ge=0, le=500)
+    china_aqi_primary_pollutant: str | None = None
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)

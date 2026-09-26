@@ -1,5 +1,5 @@
 export type DatasetMode = 'real_only' | 'synthetic_only' | 'all'
-export type Exposure = 'pm2_5' | 'pm10' | 'us_aqi' | 'relative_humidity' | 'temperature_c'
+export type Exposure = 'pm2_5' | 'pm10' | 'china_aqi_estimate' | 'relative_humidity' | 'temperature_c'
 export type AnalysisVariable = 'tnss' | 'overall_severity' | Exposure
 export type AssociationStatus = 'ok' | 'insufficient_data' | 'insufficient_variation' | 'unavailable'
 
@@ -53,7 +53,7 @@ export type AssociationsResponse = DatasetMetadata & {
 export type AnalysisResponse = { descriptive: DescriptiveResponse; associations: AssociationsResponse }
 
 export type LagHours = 0 | 6 | 12 | 24
-export type LagExposure = 'pm2_5' | 'us_aqi' | 'relative_humidity'
+export type LagExposure = 'pm2_5' | 'china_aqi_estimate' | 'relative_humidity'
 export type LagResult = Omit<AssociationResult, 'variable'> & {
   variable: LagExposure
   lag_hours: LagHours

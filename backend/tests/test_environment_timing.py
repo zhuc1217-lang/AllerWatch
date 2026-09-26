@@ -26,7 +26,7 @@ def observation(index=0, **changes):
                   sneezing=(index // 4) % 4, runny_nose=1, nasal_itching=1,
                   eye_symptoms=3, overall_severity=5, medication_taken=False,
                   notes=None, is_synthetic=True, pm2_5=float(index), pm10=float(index * 2),
-                  us_aqi=float(index * 3), relative_humidity=50.0 + index, temperature_c=10.0 + index,
+                  china_aqi_estimate=float(index * 3), relative_humidity=50.0 + index, temperature_c=10.0 + index,
                   weather_timestamp=time, air_quality_timestamp=time,
                   environment_timestamp=time + timedelta(seconds=3))
     values.update(changes)
@@ -140,9 +140,10 @@ def test_audit_backdated_submission_regression_preserves_every_raw_column(client
             index = self.index
             self.index += 1
             return SimpleNamespace(temperature_c=10 + index, relative_humidity=50 + index, pm2_5=index,
-                pm10=index * 2, us_aqi=index * 3, timestamp=T + timedelta(days=30, seconds=3),
+                pm10=index * 2, china_aqi_estimate=index * 3, timestamp=T + timedelta(days=30, seconds=3),
                 weather_timestamp=T + timedelta(days=30), air_quality_timestamp=T + timedelta(days=30),
-                latitude=51.5, longitude=-0.12)
+                latitude=51.5, longitude=-0.12, nitrogen_dioxide=20, sulfur_dioxide=10,
+                carbon_monoxide=600, ozone=64, china_aqi_primary_pollutant=None)
     service = CurrentService()
     client.app.dependency_overrides[get_environment_service] = lambda: service
     saved = []

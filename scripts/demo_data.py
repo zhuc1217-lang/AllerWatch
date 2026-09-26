@@ -18,10 +18,13 @@ from sqlalchemy.orm import Session
 
 from app.database import DEFAULT_DATABASE_PATH, create_database_engine
 from app.models import SymptomRecord
+from app.services.china_aqi import POLLUTANTS, calculate_china_aqi
 
 DAYS = 90
 DEFAULT_SEED = 42
-ENVIRONMENT_FIELDS = ("temperature_c", "relative_humidity", "pm2_5", "pm10", "us_aqi")
+ENVIRONMENT_FIELDS = ("temperature_c", "relative_humidity", *POLLUTANTS, "china_aqi_estimate")
+# Keep the original missingness RNG slots, without changing symptom/PM draws.
+_MISSING_SLOTS = ("temperature_c", "relative_humidity", "pm2_5", "pm10", "air_index")
 NASAL_FIELDS = ("nasal_congestion", "sneezing", "runny_nose", "nasal_itching")
 
 
@@ -55,20 +58,6 @@ def _score(value: float, maximum: int = 3) -> int:
     return int(_bounded(round(value), 0, maximum))
 
 
-def _synthetic_aqi(pm2_5: float) -> int:
-    # PM2.5 breakpoints only, for plausible *synthetic* values (not daily AQI/NowCast).
-    # https://aqs.epa.gov/aqsweb/documents/codetables/aqi_breakpoints.html
-    for low, high, low_index, high_index in (
-        (0.0, 9.0, 0, 50),
-        (9.1, 35.4, 51, 100),
-        (35.5, 55.4, 101, 150),
-        (55.5, 125.4, 151, 200),
-    ):
-        if low <= pm2_5 <= high:
-            return round(low_index + (pm2_5 - low) * (high_index - low_index) / (high - low))
-    raise ValueError("Synthetic PM2.5 must be within the supported range at one decimal place")
-
-
 def build_demo_records(*, seed: int = DEFAULT_SEED, end_date: date | None = None) -> list[SymptomRecord]:
     """Return unpersisted model entities; deterministic for a seed and end date."""
     end_date = end_date if end_date is not None else default_end_date()
@@ -81,6 +70,9 @@ def build_demo_records(*, seed: int = DEFAULT_SEED, end_date: date | None = None
     episode_starts = set(rng.sample(range(5, DAYS - 6), 4))
     flare_starts = set(rng.sample(range(2, DAYS - 3), 4))
     records = []
+    # Separate stream: adding gases must not change TNSS, time, medication or PM.
+    gas_rng = random.Random(f"{seed}:china-aqi-gases")
+    no2, so2, co, ozone = 25.0, 8.0, 500.0, 65.0
 
     for day_index in range(DAYS):
         day = start_date + timedelta(days=day_index)
@@ -126,7 +118,6 @@ def build_demo_records(*, seed: int = DEFAULT_SEED, end_date: date | None = None
                 medication_taken=False, is_synthetic=True,
                 notes="Synthetic development observation; not a patient record." if rng.random() < 0.05 else None,
                 temperature_c=temp, relative_humidity=rh, pm2_5=pm, pm10=pm10,
-                us_aqi=float(_synthetic_aqi(pm)),
                 environment_timestamp=timestamp + timedelta(seconds=3),
                 weather_timestamp=timestamp.replace(minute=timestamp.minute // 15 * 15, second=0),
                 air_quality_timestamp=timestamp.replace(minute=0, second=0),
@@ -135,22 +126,39 @@ def build_demo_records(*, seed: int = DEFAULT_SEED, end_date: date | None = None
             # Sampling medication never changes current/future symptom states.
             probability = 0.10 + 0.65 / (1 + math.exp(-(record.tnss - 6) / 1.8))
             record.medication_taken = rng.random() < probability
+            # No new gas enters the symptom burden formula. Persistent noisy ambient
+            # profiles are demonstrations, not fitted to outcomes or target accuracy.
+            no2 = _bounded(0.75 * no2 + 0.25 * (15 + 0.55 * pm) + gas_rng.gauss(0, 4), 2, 160)
+            so2 = _bounded(0.8 * so2 + 0.2 * (4 + 0.12 * pm) + gas_rng.gauss(0, 1.4), 0.5, 60)
+            co = _bounded(0.8 * co + 0.2 * (320 + 12 * pm) + gas_rng.gauss(0, 70), 100, 3000)
+            ozone = _bounded(0.7 * ozone + 0.3 * (55 + (35 if afternoon else 0) + 0.5 * temp) + gas_rng.gauss(0, 12), 5, 220)
+            record.nitrogen_dioxide, record.sulfur_dioxide = round(no2, 1), round(so2, 1)
+            record.carbon_monoxide, record.ozone = round(co, 1), round(ozone, 1)
             records.append(record)
 
     # Fix an approximately 6% record-level missingness rate; preserve observed zeros.
     for record in rng.sample(records, round(len(records) * 0.06)):
         missing = rng.choice([
-            ("temperature_c", "relative_humidity"), ("pm2_5", "pm10", "us_aqi"),
-            (rng.choice(ENVIRONMENT_FIELDS),), ENVIRONMENT_FIELDS,
+            ("temperature_c", "relative_humidity"), ("pm2_5", "pm10", "air_index"),
+            (rng.choice(_MISSING_SLOTS),), _MISSING_SLOTS,
         ])
-        for field in missing:
+        # Whole-air outages remove every pollutant. A single index-slot outage
+        # represents missing O3; never invent the unavailable sixth concentration.
+        fields = set(missing) - {"air_index"}
+        if "air_index" in missing:
+            fields.update(POLLUTANTS if "pm2_5" in missing else ("ozone",))
+        for field in fields:
             setattr(record, field, None)
         if record.temperature_c is None and record.relative_humidity is None:
             record.weather_timestamp = None
-        if all(getattr(record, field) is None for field in ("pm2_5", "pm10", "us_aqi")):
+        if all(getattr(record, field) is None for field in POLLUTANTS):
             record.air_quality_timestamp = None
         if all(getattr(record, field) is None for field in ENVIRONMENT_FIELDS):
             record.environment_timestamp = None
+    for record in records:
+        estimate = calculate_china_aqi(**{field: getattr(record, field) for field in POLLUTANTS})
+        record.china_aqi_estimate = estimate.aqi
+        record.china_aqi_primary_pollutant = estimate.primary_pollutant
     return records
 
 

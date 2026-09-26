@@ -1,3 +1,4 @@
+import ChinaAqiNote from '../components/ChinaAqiNote'
 import { useEffect, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getSymptomRecords } from '../api/symptoms'
@@ -58,13 +59,19 @@ function RecordDetails({ record }: { record: SymptomRecord }) {
             <div><dt>Relative humidity</dt><dd>{exposureValue(record.relative_humidity, '%')}</dd></div>
             <div><dt>PM2.5</dt><dd>{exposureValue(record.pm2_5, 'µg/m³')}</dd></div>
             <div><dt>PM10</dt><dd>{exposureValue(record.pm10, 'µg/m³')}</dd></div>
-            <div><dt>US AQI</dt><dd>{exposureValue(record.us_aqi)}</dd></div>
+            <div><dt>NO₂</dt><dd>{exposureValue(record.nitrogen_dioxide, 'µg/m³')}</dd></div>
+            <div><dt>SO₂</dt><dd>{exposureValue(record.sulfur_dioxide, 'µg/m³')}</dd></div>
+            <div><dt>CO</dt><dd>{exposureValue(record.carbon_monoxide, 'µg/m³')}</dd></div>
+            <div><dt>O₃</dt><dd>{exposureValue(record.ozone, 'µg/m³')}</dd></div>
+            <div><dt>China AQI (estimated)</dt><dd>{exposureValue(record.china_aqi_estimate)}</dd></div>
+            <div><dt>Estimated primary pollutant(s)</dt><dd>{record.china_aqi_estimate == null ? 'Unavailable' : record.china_aqi_primary_pollutant ?? 'None (AQI ≤ 50)'}</dd></div>
             <div><dt>Environmental snapshot retrieved</dt><dd><ExposureTime value={record.environment_timestamp} /></dd></div>
             <div><dt>Weather data time</dt><dd><ExposureTime value={record.weather_timestamp} /></dd></div>
             <div><dt>Air quality data time</dt><dd><ExposureTime value={record.air_quality_timestamp} /></dd></div>
             <div><dt>Monitoring coordinates</dt><dd>{record.environment_latitude == null || record.environment_longitude == null
               ? 'Unavailable' : `${record.environment_latitude}, ${record.environment_longitude}`}</dd></div>
           </dl>
+          <ChinaAqiNote />
         </section>
       </div>
     </details>

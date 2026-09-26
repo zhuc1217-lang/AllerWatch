@@ -1,3 +1,4 @@
+import ChinaAqiNote from '../components/ChinaAqiNote'
 import { useEffect, useState } from 'react'
 import { getSymptomRecords } from '../api/symptoms'
 import { ChartLegend, ObservationLabel, RelationshipChart, TrendChart } from '../components/DashboardCharts'
@@ -24,13 +25,13 @@ function ObservationTable({ records }: { records: SymptomRecord[] }) {
           <thead><tr>
             <th scope="col">Date / time</th><th scope="col">Observation type</th><th scope="col">TNSS / 12</th>
             <th scope="col">Overall / 10</th><th scope="col">Medication taken</th><th scope="col">PM2.5 (µg/m³)</th>
-            <th scope="col">US AQI</th><th scope="col">Humidity (%)</th>
+            <th scope="col">China AQI (estimated)</th><th scope="col">Humidity (%)</th>
           </tr></thead>
           <tbody>{records.map(record => <tr key={record.id}>
             <td><time dateTime={record.timestamp}>{formatDate(record.timestamp)}, {formatTime(record.timestamp)}</time></td>
             <td>{record.is_synthetic ? 'Synthetic development data' : 'Real observation'}</td>
             <td>{record.tnss}</td><td>{record.overall_severity}</td><td>{record.medication_taken ? 'Yes' : 'No'}</td>
-            <td>{displayValue(record.pm2_5)}</td><td>{displayValue(record.us_aqi)}</td><td>{displayValue(record.relative_humidity)}</td>
+            <td>{displayValue(record.pm2_5)}</td><td>{displayValue(record.china_aqi_estimate)}</td><td>{displayValue(record.relative_humidity)}</td>
           </tr>)}</tbody>
         </table>
       </div>
@@ -109,7 +110,7 @@ export default function Dashboard() {
               <div className="dashboard-metric"><dt><span className="metric-icon"><Icon name="person" /></span>Latest TNSS</dt><dd>{latest.tnss} <span>/ 12</span></dd></div>
               <div className="dashboard-metric"><dt><span className="metric-icon"><Icon name="chart" /></span>Overall severity</dt><dd>{latest.overall_severity} <span>/ 10</span></dd></div>
               <div className="dashboard-metric"><dt><span className="metric-icon"><Icon name="wind" /></span>Latest PM2.5</dt><dd className={latest.pm2_5 == null ? 'metric-unavailable' : ''}>{displayValue(latest.pm2_5)}{latest.pm2_5 != null && <span className="metric-unit">µg/m³</span>}</dd></div>
-              <div className="dashboard-metric"><dt><span className="metric-icon"><Icon name="leaf" /></span>Latest US AQI</dt><dd className={latest.us_aqi == null ? 'metric-unavailable' : ''}>{displayValue(latest.us_aqi)}</dd></div>
+              <div className="dashboard-metric"><dt><span className="metric-icon"><Icon name="leaf" /></span>Latest China AQI (estimated)</dt><dd className={latest.china_aqi_estimate == null ? 'metric-unavailable' : ''}>{displayValue(latest.china_aqi_estimate)}</dd></div>
             </dl>
             <section className="dashboard-card dashboard-dataset" aria-labelledby="dataset-summary">
               <h2 id="dataset-summary"><Icon name="database" />Dataset summary</h2>
@@ -122,7 +123,7 @@ export default function Dashboard() {
           </div>
           <div className="snapshot-footnotes">
             <p className="dashboard-caption">Environmental values are raw stored snapshots. Relationship plots check time alignment separately.</p>
-            <p className="dashboard-caption">Missing: PM2.5 <strong>{summary.missingPm25}</strong> · AQI <strong>{summary.missingAqi}</strong> · Humidity <strong>{summary.missingHumidity}</strong></p>
+            <p className="dashboard-caption">Missing: PM2.5 <strong>{summary.missingPm25}</strong> · China AQI (estimated) <strong>{summary.missingAqi}</strong> · Humidity <strong>{summary.missingHumidity}</strong></p>
           </div>
         </section>}
         <section className="dashboard-filters" aria-label="Dashboard filters">
@@ -170,6 +171,7 @@ export default function Dashboard() {
           <ObservationTable records={selected} />
         </>}
       </>)}
+      <ChinaAqiNote />
       <p className="dashboard-disclaimer">Dashboard visualisations are exploratory and do not establish causal relationships. Synthetic observations are used for development and demonstration.</p>
     </main>
   )

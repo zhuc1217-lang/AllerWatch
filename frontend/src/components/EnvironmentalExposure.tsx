@@ -1,3 +1,4 @@
+import ChinaAqiNote from './ChinaAqiNote'
 import { useEffect, useState } from 'react'
 import { getCurrentEnvironment } from '../api/environment'
 import type { CurrentEnvironment } from '../types/environment'
@@ -60,8 +61,14 @@ export default function EnvironmentalExposure() {
             <div><dt>Relative humidity</dt><dd>{formatReading(state.data.relative_humidity, '%')}</dd></div>
             <div><dt>PM2.5</dt><dd>{formatReading(state.data.pm2_5, 'µg/m³')}</dd></div>
             <div><dt>PM10</dt><dd>{formatReading(state.data.pm10, 'µg/m³')}</dd></div>
-            <div><dt>US AQI</dt><dd>{formatReading(state.data.us_aqi, '')}</dd></div>
+            <div><dt>NO₂</dt><dd>{formatReading(state.data.nitrogen_dioxide, 'µg/m³')}</dd></div>
+            <div><dt>SO₂</dt><dd>{formatReading(state.data.sulfur_dioxide, 'µg/m³')}</dd></div>
+            <div><dt>CO</dt><dd>{formatReading(state.data.carbon_monoxide, 'µg/m³')}</dd></div>
+            <div><dt>O₃</dt><dd>{formatReading(state.data.ozone, 'µg/m³')}</dd></div>
+            <div><dt>China AQI (estimated)</dt><dd>{formatReading(state.data.china_aqi_estimate, '')}</dd></div>
+            <div><dt>Estimated primary pollutant(s)</dt><dd>{state.data.china_aqi_estimate == null ? 'Unavailable' : state.data.china_aqi_primary_pollutant ?? 'None (AQI ≤ 50)'}</dd></div>
           </dl>
+          <ChinaAqiNote />
           <div className="environment-times">
             <p>Last updated: <time dateTime={state.data.timestamp}>{formatUtc(state.data.timestamp)}</time> (retrieved)</p>
             <p>Weather data time: {state.data.weather_timestamp ? <time dateTime={state.data.weather_timestamp}>{formatUtc(state.data.weather_timestamp)}</time> : 'Unavailable'}</p>
